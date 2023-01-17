@@ -1,0 +1,35 @@
+---
+dp-check-dynamic-dag-format-1:
+  schedule_interval: "@daily"
+  concurrency: 1
+  max_active_runs: 1
+  dagrun_timeout_sec: 300
+  orientation: "TB"
+  tasks:
+   dp-music-test:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --class com.wynk.dataplatform.compute.Airflow --name\
+        \ music.test-test s3://data-science-common-data-platform/jars/data-platform-ingestion-assembly-latest.jar\
+        \ --ingestion.conf dataset.name=music.test-test --ingestion.conf enigma.dataset.name=music.test-test\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]  %} {{ params[\"flow_start_date\"]}}  {% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}} {% endif %} --ingestion.conf backfill=false'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+   dp-s3-sensor-test-job:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "s3://data-science-test-only/shivank/test-test/day={%if params[\"\
+        flow_start_date\"]  %} {{ params[\"flow_start_date\"]}}  {% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}} {% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+  default_args:
+    owner: "shivank.chaturvedi@wynk.in"
+    retries: 1
+    retry_delay_sec: 30
+    catchup: false
+    params:
+      cluster_ip: "10.70.21.86"
+      flow_start_date: null
+    start_date: "1672996541103"

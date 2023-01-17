@@ -1,0 +1,449 @@
+---
+dp-partner-prod-data-daily-end-workflow:
+  schedule_interval: "@daily"
+  concurrency: 1
+  max_active_runs: 1
+  dagrun_timeout_sec: 300
+  orientation: "TB"
+  tasks:
+   dp-partner-prod-cluster-startup:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'echo hi'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+   dp-partner-prod-mtd-user-type-days:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.mtd_user_type_days\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.mtd_user_type_days --ingestion.conf\
+        \ enigma.dataset.name=partner.mtd_user_type_days --ingestion.conf env=prod\
+        \ --ingestion.conf ingestion.date={%if params[\"flow_start_date\"]%}{{params[\"\
+        flow_start_date\"]}}{% else %}{{execution_date.strftime(\"%Y-%m-%d\")}}{%\
+        \ endif %} --ingestion.conf redshift.spectrum.schema.name=partner_spectrum\
+        \ --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-cluster-startup"
+   dp-partner-prod-music-cms-daily-report:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_cms_daily_report\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_cms_daily_report --ingestion.conf\
+        \ enigma.dataset.name=partner.music_cms_daily_report --ingestion.conf env=prod\
+        \ --ingestion.conf ingestion.date={%if params[\"flow_start_date\"]%}{{params[\"\
+        flow_start_date\"]}}{% else %}{{execution_date.strftime(\"%Y-%m-%d\")}}{%\
+        \ endif %} --ingestion.conf redshift.spectrum.schema.name=partner_spectrum\
+        \ --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-cluster-startup"
+   dp-partner-prod-music-billing-ytd-wmg:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing_ytd_wmg\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing_ytd_wmg --ingestion.conf\
+        \ enigma.dataset.name=partner.music_billing_ytd_wmg --ingestion.conf env=prod\
+        \ --ingestion.conf ingestion.date={%if params[\"flow_start_date\"]%}{{params[\"\
+        flow_start_date\"]}}{% else %}{{execution_date.strftime(\"%Y-%m-%d\")}}{%\
+        \ endif %} --ingestion.conf redshift.spectrum.schema.name=partner_spectrum\
+        \ --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-music-billing-wmg"
+   dp-partner-prod-music-cms-mtd-report:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_cms_mtd_report\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_cms_mtd_report --ingestion.conf\
+        \ enigma.dataset.name=partner.music_cms_mtd_report --ingestion.conf env=prod\
+        \ --ingestion.conf ingestion.date={%if params[\"flow_start_date\"]%}{{params[\"\
+        flow_start_date\"]}}{% else %}{{execution_date.strftime(\"%Y-%m-%d\")}}{%\
+        \ endif %} --ingestion.conf redshift.spectrum.schema.name=partner_spectrum\
+        \ --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-music-cms-daily-report"
+   dp-partner-prod-music-cms-daily-report-csv:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_cms_daily_report_csv\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_cms_daily_report_csv --ingestion.conf\
+        \ enigma.dataset.name=partner.music_cms_daily_report_csv --ingestion.conf\
+        \ env=prod --ingestion.conf ingestion.date={%if params[\"flow_start_date\"\
+        ]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"%Y-%m-%d\"\
+        )}}{% endif %} --ingestion.conf redshift.spectrum.schema.name=partner_spectrum\
+        \ --ingestion.conf redshift.schema.name=partner --ingestion.conf write.coalesce.count=1\
+        \ --ingestion.conf write.format=csv --ingestion.conf write.options=header:true'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-music-cms-daily-report"
+   dp-partner-prod-music-cms-mtd-report-csv:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_cms_mtd_report_csv\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_cms_mtd_report_csv --ingestion.conf\
+        \ enigma.dataset.name=partner.music_cms_mtd_report_csv --ingestion.conf env=prod\
+        \ --ingestion.conf ingestion.date={%if params[\"flow_start_date\"]%}{{params[\"\
+        flow_start_date\"]}}{% else %}{{execution_date.strftime(\"%Y-%m-%d\")}}{%\
+        \ endif %} --ingestion.conf redshift.spectrum.schema.name=partner_spectrum\
+        \ --ingestion.conf redshift.schema.name=partner --ingestion.conf write.coalesce.count=1\
+        \ --ingestion.conf write.format=csv --ingestion.conf write.options=header:true'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-music-cms-mtd-report"
+   dp-partner-prod-music-billing-wmg:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=wmg --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-abcdigital:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=abcdigital --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-adityamusic:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=adityamusic --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-believe:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=believe --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-divo:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=divo --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-eveara:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=eveara --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-gkdigital:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=gkdigital --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-horus:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=horus --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-hungama:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=hungama --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-ingrooves:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=ingrooves --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-monstercat:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=monstercat --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-nuemeta:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=nuemeta --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-onedigital:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=onedigital --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-orchard:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=orchard --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-pdl:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=pdl --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-saregama:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=saregama --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-simca:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=simca --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-sony:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=sony --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-speedmusic:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=speedmusic --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-timesmusic:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=timesmusic --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-unisysinfo:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=unisysinfo --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-universalmusic:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=universalmusic --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-venus:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=venus --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+   dp-partner-prod-music-billing-zeemusic:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 1g --executor-memory 1g --conf spark.executor.memoryOverhead=2g --class\
+        \ com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver --name partner.music_billing\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=partner.music_billing --ingestion.conf enigma.dataset.name=partner.music_billing\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf partner.runid=zeemusic --ingestion.conf\
+        \ redshift.spectrum.schema.name=partner_spectrum --ingestion.conf redshift.schema.name=partner'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-partner-prod-mtd-user-type-days"
+  default_args:
+    owner: "shivank.chaturvedi@wynk.in"
+    retries: 1
+    retry_delay_sec: 30
+    catchup: false
+    params:
+      cluster_ip: "10.70.21.86"
+      flow_start_date: null
+    start_date: "2023-01-18"

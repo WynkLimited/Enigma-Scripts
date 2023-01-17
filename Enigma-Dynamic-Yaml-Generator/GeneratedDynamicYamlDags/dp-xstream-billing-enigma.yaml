@@ -1,0 +1,159 @@
+---
+dp-xstream-billing-enigma:
+  schedule_interval: "@daily"
+  concurrency: 1
+  max_active_runs: 1
+  dagrun_timeout_sec: 300000
+  orientation: "TB"
+  tasks:
+   dp-xstream-billing-prod-device-user-mapping-optimised-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/device_user_mapping_optimised/day={%if\
+        \ params[\"flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-user-content-streams-agg-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/user_content_streams_agg/day={%if\
+        \ params[\"flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-user-cp-subscription-log-agg-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/user_cp_subscription_log_agg/day={%if\
+        \ params[\"flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-xp-cp-contract-all-details-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/xp_cp_contract_all_details/day={%if\
+        \ params[\"flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-wcf-partner-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/wcf_partner/day={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-preferred-partner-claim-data-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/preferred_partner_claim_data/day={%if\
+        \ params[\"flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-preferred-partner-purchase-data-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/preferred_partner_purchase_data/day={%if\
+        \ params[\"flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-wcf-plan-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/wcf_plan/day={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-xmp-cp-contract-all-details-check:
+      aws_conn_id: "S3Conn"
+      poke_interval: 60
+      bucket_key: "{{var.value.redshift_tv_base_path}}/xmp_cp_contract_all_details/day={%if\
+        \ params[\"flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %}/_SUCCESS"
+      operator: "airflow.providers.amazon.aws.sensors.s3.S3KeySensor"
+      timeout: 180
+   dp-xstream-billing-prod-xmp-cp-billing-report-v2:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 4g --executor-memory 6g --conf spark.yarn.maxAppAttempts=1 --class com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver\
+        \ --name xstream.xmp_cp_billing_report_v2_enigma s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=xstream.xmp_cp_billing_report_v2_enigma --ingestion.conf\
+        \ enigma.dataset.name=xstream.xmp_cp_billing_report_v2_enigma --ingestion.conf\
+        \ env=prod --ingestion.conf ingestion.date={%if params[\"flow_start_date\"\
+        ]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"%Y-%m-%d\"\
+        )}}{% endif %} --ingestion.conf backfill=false --ingestion.conf redshift.spectrum.schema.name=spectrum\
+        \ --ingestion.conf redshift.schema.name=public'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-xstream-billing-prod-user-content-streams-agg-check"
+      - "dp-xstream-billing-prod-device-user-mapping-optimised-check"
+      - "dp-xstream-billing-prod-wcf-partner-check"
+      - "dp-xstream-billing-prod-user-cp-subscription-log-agg-check"
+      - "dp-xstream-billing-prod-xp-cp-contract-all-details-check"
+   dp-xstream-billing-prod-user-subscribed-content-streams-agg-v2:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 4g --executor-memory 6g --conf spark.yarn.maxAppAttempts=1 --class com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver\
+        \ --name xstream.user_subscribed_content_streams_agg_v2_enigma s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=xstream.user_subscribed_content_streams_agg_v2_enigma\
+        \ --ingestion.conf enigma.dataset.name=xstream.user_subscribed_content_streams_agg_v2_enigma\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf backfill=false --ingestion.conf\
+        \ redshift.spectrum.schema.name=spectrum --ingestion.conf redshift.schema.name=public'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-xstream-billing-prod-user-content-streams-agg-check"
+      - "dp-xstream-billing-prod-device-user-mapping-optimised-check"
+      - "dp-xstream-billing-prod-wcf-partner-check"
+      - "dp-xstream-billing-prod-user-cp-subscription-log-agg-check"
+      - "dp-xstream-billing-prod-xp-cp-contract-all-details-check"
+   dp-xstream-billing-prod-user-subscribed-streams-quality-v2:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 4g --executor-memory 6g --conf spark.yarn.maxAppAttempts=1 --class com.wynk.dataplatform.ingestion.EnigmaBaseMainDriver\
+        \ --name xstream.user_subscribed_streams_quality_v2_enigma s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=xstream.user_subscribed_streams_quality_v2_enigma\
+        \ --ingestion.conf enigma.dataset.name=xstream.user_subscribed_streams_quality_v2_enigma\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf backfill=false --ingestion.conf\
+        \ redshift.spectrum.schema.name=spectrum --ingestion.conf redshift.schema.name=public'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-xstream-billing-prod-user-subscribed-content-streams-agg-v2"
+      - "dp-xstream-billing-prod-xp-cp-contract-all-details-check"
+   dp-der-prod-xmp-cp-billing-mtd-v2:
+      bash_command: "ssh -o StrictHostKeyChecking=no -i {{var.value.pem_file_location}}\
+        \ hadoop@{{params[\"cluster_ip\"]}} 'spark-submit --deploy-mode cluster --driver-memory\
+        \ 2g --executor-memory 4g --conf spark.yarn.maxAppAttempts=1 --conf spark.serializer=org.apache.spark.serializer.KryoSerializer\
+        \ --conf spark.task.maxFailures=12 --conf spark.blacklist.task.maxTaskAttemptsPerExecutor=5\
+        \ --conf spark.blacklist.task.maxTaskAttemptsPerNode=10 --conf spark.blacklist.timeout=20m\
+        \ --conf spark.blacklist.application.maxFailedTasksPerExecutor=10 --conf spark.blacklist.stage.maxFailedTasksPerExecutor=10\
+        \ --conf spark.blacklist.application.maxFailedExecutorsPerNode=10 --conf spark.blacklist.stage.maxFailedExecutorsPerNode=10\
+        \ --class com.wynk.dataplatform.compute.DerivedMainDriver --name xstream.dp-der-prod-xmp-cp-billing-mtd-v2-enigma\
+        \ s3://data-platform-test-only/shivank/data-platform-ingestion-enigma-Xstream-billing-assembly-1.00.jar\
+        \ --ingestion.conf dataset.name=xstream.dp-der-prod-xmp-cp-billing-mtd-v2-enigma\
+        \ --ingestion.conf enigma.dataset.name=xstream.dp-der-prod-xmp-cp-billing-mtd-v2-enigma\
+        \ --ingestion.conf env=prod --ingestion.conf ingestion.date={%if params[\"\
+        flow_start_date\"]%}{{params[\"flow_start_date\"]}}{% else %}{{execution_date.strftime(\"\
+        %Y-%m-%d\")}}{% endif %} --ingestion.conf backfill=false --ingestion.conf\
+        \ redshift.spectrum.schema.name=spectrum --ingestion.conf redshift.schema.name=public'"
+      operator: "airflow.operators.bash_operator.BashOperator"
+      dependencies:
+      - "dp-xstream-billing-prod-xmp-cp-billing-report-v2"
+  default_args:
+    owner: "shivank.chaturvedi@wynk.in"
+    retries: 1
+    retry_delay_sec: 30
+    catchup: false
+    params:
+      cluster_ip: "10.70.21.86"
+      flow_start_date: null
+    start_date: "2023-01-06"
